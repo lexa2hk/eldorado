@@ -1,0 +1,149 @@
+version: '3.4'
+
+services:
+  api:
+    container_name: api
+    build:
+      context: .
+      dockerfile: ./build/api.Dockerfile
+    restart: always
+    environment:
+      PORT: ${API_PORT}
+      API_CONFIG_PATH: ${API_CONFIG_PATH}
+    networks:
+      - worknet
+    ports:
+      - "${API_PORT}:${API_PORT}"
+    depends_on:
+      - redis
+      - postgres
+  auth:
+    build:
+      context: .
+      dockerfile: ./build/auth.Dockerfile
+    restart: always
+    environment:
+      PORT: ${AUTH_SERVICE_PORT}
+      AUTH_SERVICE_CONFIG_PATH: ${AUTH_SERVICE_CONFIG_PATH}
+      RSA_PRIVATE_KEY: ${RSA_PRIVATE_KEY}
+      RSA_PUBLIC_KEY: ${RSA_PUBLIC_KEY}
+    networks:
+      - worknet
+    ports:
+      - "${AUTH_SERVICE_PORT}:${AUTH_SERVICE_PORT}"
+    depends_on:
+      - redis
+#      - rabbitmq
+      - postgres
+#  emailsender:
+#    container_name: email-sender
+#    build:
+#      context: .
+#      dockerfile: ./build/emailsender.Dockerfile
+#    restart: always
+#    environment:
+#      EMAIL_SENDER_CONFIG_PATH: ${EMAIL_SENDER_CONFIG_PATH}
+#      SMTP_EMAIL: ${SMTP_EMAIL}
+#      SMTP_PASS: ${SMTP_PASS}
+#    networks:
+#      - worknet
+#    ports:
+#      - "${EMAIL_SENDER_PORT}"
+#    depends_on:
+#      - rabbitmq
+#  statistic:
+#    container_name: statistic
+#    build:
+#      context: .
+#      dockerfile: ./build/statistic.Dockerfile
+#    restart: always
+#    environment:
+#      STATISTIC_CONFIG_PATH: ${STATISTIC_CONFIG_PATH}
+#    networks:
+#      - worknet
+#    ports:
+#      - "${STATISTIC_SERVICE_PORT}"
+#    depends_on:
+#      - rabbitmq
+#      - postgres
+#  rabbitmq:
+#    container_name: postbox
+#    image: rabbitmq:3-management-alpine
+#    restart: unless-stopped
+#    ports:
+#      - "15672:15672"
+#      - "5672:5672"
+#    volumes:
+#      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+#      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq/
+#    networks:
+#      - worknet
+#    deploy:
+#      resources:
+#        limits:
+#          cpus: '1'
+#          memory: "3G"
+  redis:
+    container_name: sessions
+    image: bitnami/redis:latest
+    environment:
+      REDIS_DISABLE_COMMANDS: FLUSHDB,FLUSHALL,CONFIG
+      REDIS_PASSWORD: ${REDIS_PASS}
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - worknet
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: "2G"
+  postgres:
+    container_name: database
+    build:
+      context: .
+      dockerfile: ./.docker/postgres.Dockerfile
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: ${PG_DB}
+      POSTGRES_PASSWORD: postgres
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - worknet
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready",
+          "-U",
+          "${PG_USER}",
+          "-d",
+          "${PG_DB}"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 4G
+
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+
+networks:
+  worknet:
+    driver: bridge

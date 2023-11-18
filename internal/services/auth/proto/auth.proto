@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "./auth/proto";
+
+service AuthService {
+    rpc SignUp(SignUpRequest) returns (Response) {}
+    rpc Token(TokenRequest) returns (TokenResponse) {}
+    rpc Refresh(RefreshRequest) returns (RefreshResponse) {}
+    rpc Verify(VerifyRequest) returns (VerifyResponse) {}
+}
+
+message User {
+    string id = 1;
+    string username = 2;
+    string email = 3;
+    string createdOn = 4;
+}
+
+message Response {
+    int64 status = 1;
+    string error = 2;
+}
+
+message SignUpRequest {
+    string email = 1;
+    string username = 2;
+    string password = 3;
+}
+
+message TokenRequest {
+    string email = 1;
+    string password = 2;
+}
+message TokenResponse {
+    Response meta = 1;
+    string accessToken = 2;
+    string refreshToken = 3;
+}
+
+message RefreshRequest {
+    string refresh = 1;
+}
+message RefreshResponse {
+    Response meta = 1;
+    string accessToken = 2;
+}
+
+message VerifyRequest {
+    string token = 1;
+}
+message VerifyResponse {
+    Response meta = 1;
+    string userID = 2;
+}

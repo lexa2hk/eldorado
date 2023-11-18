@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<body>
+    <section>
+        <main>
+            <h3 style="font-size: large; font-weight: bold;">Hi, you have uncompleted tasks!</h3>
+            <ul style="margin-top: 8px;">
+                {{range $task := .}}
+                <li style="font-weight: bold;">{{$task}}</li>
+                {{end}}
+            </ul>
+        </main>
+    </section>
+</body>
+
+</html>

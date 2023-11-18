@@ -1,0 +1,12 @@
+env: local
+auth_service_addr: auth:8081
+postgres:
+  url: postgres://postgres:postgres@postgres:5432/eldorado?sslmode=disable
+server:
+  addr: :8080
+  read_timeout: 10s
+  write_timeout: 10s
+  idle_timeout: 120s
+redis:
+  cache_ttl: 60m
+  url: redis://default:guest@redis:6379/0?dial_timeout=15s&read_timeout=5s&write_timeout=5s
